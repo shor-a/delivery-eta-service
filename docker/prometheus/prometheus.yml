@@ -1,0 +1,30 @@
+global:
+  scrape_interval: 100ms # scrape every 100 ms for high-resolution load-test data
+  evaluation_interval: 100ms
+  scrape_timeout: 75ms
+
+# Remote-write receiver — accepts push metrics from k6
+# Enabled via --web.enable-remote-write-receiver CLI flag in compose
+remote_write: []
+
+scrape_configs:
+  # ---- Spring Boot / Micrometer Prometheus endpoint -----------------------
+  - job_name: delivery-eta-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["delivery-service:8080"]
+    # Label every metric with the service name for easy Grafana filtering
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: delivery-service
+
+  # ---- k6 push metrics (remote-write receiver) ----------------------------
+  - job_name: k6
+    static_configs:
+      - targets: ["prometheus:9090"] # k6 writes to Prometheus directly via remote_write
+
+  # ---- Prometheus self-monitoring -----------------------------------------
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
