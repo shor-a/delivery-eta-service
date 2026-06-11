@@ -1,0 +1,56 @@
+# delivery-service compose file — lives at project root
+# Manages only the Spring Boot application container.
+services:
+  delivery-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: delivery-eta-service:1.0.0
+    container_name: delivery-service
+    ports:
+      - "8080:8080"
+    mem_limit: 1024m
+    mem_reservation: 512m
+    cpus: "1.0"
+    # deploy block: honoured by Docker Swarm / Docker Compose v2 (ignored by podman-compose)
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    environment:
+      # Override Spring Boot properties via env vars
+      SPRING_APPLICATION_NAME: delivery-eta-service
+      SERVER_PORT: 8080
+      # JPA / H2
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:etadb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION: "true"
+      SPRING_SQL_INIT_MODE: always
+      # Actuator — expose prometheus endpoint
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus,metrics,startup
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
+      # ETA tuning — dial these up for heavier CPU load
+      ETA_WAYPOINT_COUNT: "20"
+      ETA_SIMULATION_ITERATIONS: "200"
+      ETA_HISTORY_WINDOW_SIZE: "500"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/actuator/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - eta-net
+
+networks:
+  eta-net:
+    name: eta-net
+    driver: bridge
