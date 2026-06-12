@@ -1,0 +1,500 @@
+{
+  "title": "Delivery ETA — Load Test Dashboard",
+  "uid": "delivery-eta-loadtest",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1s",
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Service Uptime",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "targets": [
+        {
+          "expr": "process_uptime_seconds{job=\"delivery-eta-service\"}",
+          "legendFormat": "Uptime"
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Startup Time",
+      "description": "Time taken by Spring Boot to start (application.started.time gauge)",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "application_started_time_seconds{job=\"delivery-eta-service\"}",
+          "legendFormat": "Startup (s)"
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Requests / sec (current)",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 1,
+          "thresholds": { "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\"}[10s]))",
+          "legendFormat": "RPS"
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Active HTTP Threads",
+      "description": "With virtual threads enabled, tomcat_threads_busy_threads reports -1 (not applicable). Shows JVM live thread count instead.",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 300 },
+              { "color": "red", "value": 600 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "JVM live threads"
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Error Rate",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 2,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"delivery-eta-service\",status=~\"5..\"}[10s])) / sum(rate(http_server_requests_seconds_count{job=\"delivery-eta-service\"}[10s]))",
+          "legendFormat": "5xx rate"
+        }
+      ]
+    },
+
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "JVM Heap Used",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 400000000 },
+              { "color": "red", "value": 490000000 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=\"delivery-eta-service\",area=\"heap\"}",
+          "legendFormat": "Heap used"
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Throughput — Requests per Second",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\"}[10s]))",
+          "legendFormat": "RPS (10s avg)"
+        },
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\",status=~\"2..\"}[10s]))",
+          "legendFormat": "2xx RPS"
+        },
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\",status=~\"5..\"}[10s]))",
+          "legendFormat": "5xx RPS"
+        }
+      ]
+    },
+
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Request Latency",
+      "description": "Spring Boot 3.x exposes http_server_requests_seconds as a summary (not histogram), so exact percentiles are not available. Shows average latency and max latency per scrape window instead.",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\"}[10s]) / rate(http_server_requests_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\"}[10s])",
+          "legendFormat": "avg latency"
+        },
+        {
+          "expr": "http_server_requests_seconds_max{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\"}",
+          "legendFormat": "max latency (rolling)"
+        },
+        {
+          "expr": "rate(http_server_requests_active_seconds_sum{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\"}[10s]) / rate(http_server_requests_active_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\"}[10s])",
+          "legendFormat": "avg active latency"
+        }
+      ]
+    },
+
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "k6 — Virtual Users & Request Rate",
+      "description": "Populated only during an active k6 run with --out experimental-prometheus-rw.",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "custom": { "lineWidth": 2 } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "VUs" },
+            "properties": [
+              { "id": "unit", "value": "short" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "HTTP req/s" },
+            "properties": [{ "id": "unit", "value": "reqps" }]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "k6_vus",
+          "legendFormat": "VUs"
+        },
+        {
+          "expr": "rate(k6_http_reqs_total[10s])",
+          "legendFormat": "HTTP req/s"
+        }
+      ]
+    },
+
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "k6 — Response Time Percentiles",
+      "description": "Populated only during an active k6 run. Uses native histogram quantiles (K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true).",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(k6_http_req_duration[10s])) by (le)) * 1000",
+          "legendFormat": "k6 p50"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(k6_http_req_duration[10s])) by (le)) * 1000",
+          "legendFormat": "k6 p90"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(k6_http_req_duration[10s])) by (le)) * 1000",
+          "legendFormat": "k6 p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(k6_http_req_duration[10s])) by (le)) * 1000",
+          "legendFormat": "k6 p99"
+        }
+      ]
+    },
+
+    {
+      "id": 30,
+      "type": "timeseries",
+      "title": "JVM Heap Memory",
+      "gridPos": { "x": 0, "y": 20, "w": 8, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "lineWidth": 2, "fillOpacity": 15 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=\"delivery-eta-service\",area=\"heap\"}",
+          "legendFormat": "Heap used"
+        },
+        {
+          "expr": "jvm_memory_committed_bytes{job=\"delivery-eta-service\",area=\"heap\"}",
+          "legendFormat": "Heap committed"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{job=\"delivery-eta-service\",area=\"heap\"}",
+          "legendFormat": "Heap max"
+        }
+      ]
+    },
+
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "JVM Non-Heap Memory",
+      "gridPos": { "x": 8, "y": 20, "w": 8, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=\"delivery-eta-service\",area=\"nonheap\"}",
+          "legendFormat": "Non-heap used"
+        },
+        {
+          "expr": "jvm_memory_committed_bytes{job=\"delivery-eta-service\",area=\"nonheap\"}",
+          "legendFormat": "Non-heap committed"
+        }
+      ]
+    },
+
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "GC Pause Duration",
+      "gridPos": { "x": 16, "y": 20, "w": 8, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum{job=\"delivery-eta-service\"}[10s])",
+          "legendFormat": "GC pause rate — {{action}} {{cause}}"
+        },
+        {
+          "expr": "rate(jvm_gc_pause_seconds_count{job=\"delivery-eta-service\"}[10s])",
+          "legendFormat": "GC events/s"
+        }
+      ]
+    },
+
+    {
+      "id": 40,
+      "type": "timeseries",
+      "title": "JVM CPU Usage",
+      "gridPos": { "x": 0, "y": 27, "w": 8, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": { "lineWidth": 2, "fillOpacity": 15 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "process_cpu_usage{job=\"delivery-eta-service\"}",
+          "legendFormat": "Process CPU"
+        },
+        {
+          "expr": "system_cpu_usage{job=\"delivery-eta-service\"}",
+          "legendFormat": "System CPU"
+        }
+      ]
+    },
+
+    {
+      "id": 41,
+      "type": "timeseries",
+      "title": "Tomcat Thread Pool / Virtual Threads",
+      "description": "With virtual threads (SPRING_THREADS_VIRTUAL_ENABLED=true), busy/current/max report -1 — Tomcat has no fixed pool. JVM live threads shows actual concurrency instead.",
+      "gridPos": { "x": 8, "y": 27, "w": 8, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "tomcat_threads_busy_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "Busy (pool, -1 = virtual threads)"
+        },
+        {
+          "expr": "tomcat_threads_current_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "Current (pool, -1 = virtual threads)"
+        },
+        {
+          "expr": "tomcat_threads_config_max_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "Max configured"
+        },
+        {
+          "expr": "jvm_threads_live_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "JVM live threads (virtual thread concurrency)"
+        }
+      ]
+    },
+
+    {
+      "id": 42,
+      "type": "timeseries",
+      "title": "JVM Thread Count",
+      "gridPos": { "x": 16, "y": 27, "w": 8, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "Live threads"
+        },
+        {
+          "expr": "jvm_threads_peak_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "Peak threads"
+        },
+        {
+          "expr": "jvm_threads_daemon_threads{job=\"delivery-eta-service\"}",
+          "legendFormat": "Daemon threads"
+        }
+      ]
+    },
+
+    {
+      "id": 50,
+      "type": "timeseries",
+      "title": "Total HTTP Requests — Cumulative",
+      "gridPos": { "x": 0, "y": 34, "w": 12, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "http_server_requests_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\",status=\"200\"}",
+          "legendFormat": "200 OK total"
+        },
+        {
+          "expr": "http_server_requests_seconds_count{job=\"delivery-eta-service\",uri=\"/delivery-eta/estimate\",status=~\"5..\"}",
+          "legendFormat": "5xx total"
+        }
+      ]
+    },
+
+    {
+      "id": 51,
+      "type": "timeseries",
+      "title": "HikariCP Connection Pool",
+      "gridPos": { "x": 12, "y": 34, "w": 12, "h": 7 },
+      "datasource": { "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{job=\"delivery-eta-service\"}",
+          "legendFormat": "Active"
+        },
+        {
+          "expr": "hikaricp_connections_idle{job=\"delivery-eta-service\"}",
+          "legendFormat": "Idle"
+        },
+        {
+          "expr": "hikaricp_connections_pending{job=\"delivery-eta-service\"}",
+          "legendFormat": "Pending"
+        },
+        {
+          "expr": "hikaricp_connections{job=\"delivery-eta-service\"}",
+          "legendFormat": "Total"
+        }
+      ]
+    }
+  ]
+}
