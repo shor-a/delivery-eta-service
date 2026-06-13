@@ -1,0 +1,52 @@
+# GraalVM Native Image compose file
+services:
+  delivery-service:
+    image: delivery-eta-service-native:1.0.0
+    container_name: delivery-service
+    ports:
+      - "8080:8080"
+    mem_limit: 1024m
+    mem_reservation: 512m
+    cpus: "1.0"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    environment:
+      SPRING_APPLICATION_NAME: delivery-eta-service
+      SERVER_PORT: 8080
+      # JPA / H2
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:etadb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION: "true"
+      SPRING_SQL_INIT_MODE: always
+      # Actuator
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus,metrics,startup
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
+      # ETA tuning — use same values as JVM run for fair comparison
+      ETA_WAYPOINT_COUNT: "20"
+      ETA_SIMULATION_ITERATIONS: "200"
+      ETA_HISTORY_WINDOW_SIZE: "500"
+      # Virtual threads — removes Tomcat thread-pool ceiling at spike stage
+      SPRING_THREADS_VIRTUAL_ENABLED: "true"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fs http://localhost:8080/actuator/health || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - eta-net
+
+networks:
+  eta-net:
+    name: eta-net
+    driver: bridge
