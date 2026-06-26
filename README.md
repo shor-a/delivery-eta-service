@@ -1,6 +1,10 @@
 # Delivery ETA Service
 
-A Spring Boot microservice that computes estimated delivery times using route segmentation, speed multipliers (traffic, weather, time-of-day, vehicle type), geofence penalties, Monte Carlo confidence ranges, and a historical bias window. Built to benchmark JVM startup and throughput across three runtime variants.
+A Spring Boot microservice that computes estimated delivery times using route segmentation, speed multipliers (traffic, weather, time-of-day, vehicle type), geofence penalties, Monte Carlo confidence ranges, and a historical bias window.
+
+<img width="947" height="263" alt="6 grafana-dashboard-1" src="https://github.com/user-attachments/assets/5413102d-78ac-470c-bfbb-8cb686fb25ac" />
+
+Built as medium logic flow complexity service to ensure valid benchmark JVM startup and throughput across three runtime variants of JDK 17 - GraalVM and JDK 25 with Leyden AOT.
 
 ---
 
