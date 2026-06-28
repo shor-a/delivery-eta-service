@@ -25,7 +25,7 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=2h" # keep 2h — enough for a load test session
+      - "--storage.tsdb.retention.time=30d" # keep 30 days data rentetion time period
       - "--web.enable-remote-write-receiver" # accepts k6 push metrics
       - "--web.enable-lifecycle" # allows hot-reload via POST /-/reload
     volumes:
