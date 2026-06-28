@@ -164,7 +164,13 @@ curl -X POST http://localhost:8080/delivery-eta/estimate \
 
 The k6 script runs against whatever variant is currently up. It pushes metrics into Prometheus so they appear alongside JVM metrics on the same Grafana dashboard.
 
-### With Grafana integration
+### Quick Run k6 Load Test Script
+
+```powershell
+podman run --rm -i --network eta-net -v "${PWD}/k6:/scripts" grafana/k6 run /scripts/load-test.js
+```
+
+### Run k6 Load Test Script with Prometheus RW
 
 ```powershell
 podman run --rm -i `
@@ -175,12 +181,6 @@ podman run --rm -i `
     -e K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write `
     -e K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true `
     /scripts/load-test-coldstart.js
-```
-
-### Quick smoke test (no Prometheus output)
-
-```powershell
-podman run --rm -i --network eta-net -v "${PWD}/k6:/scripts" grafana/k6 run /scripts/load-test.js
 ```
 
 ### Test stages
